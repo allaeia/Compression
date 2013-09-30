@@ -1,5 +1,5 @@
 
-function img2 = ondelette(img)
+function [LL,LH,HL,HH] = ondelette(img)
     s=size(img);
     n=s(1)/2
     LL=zeros(n,n);
@@ -26,7 +26,7 @@ endfunction
 img = imread("lena.bmp");
 //imshow(img);
 
-ondelette(img)
+[LL,LH,HL,HH]=ondelette(img)
 imshow(LL);
 imshow(LH);
 imshow(HL);
