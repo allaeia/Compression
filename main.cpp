@@ -24,9 +24,10 @@ int main()
     img.push_back(cv::Mat_<int>(rows_s_2,cols_s_2));
     img.push_back(cv::Mat_<int>(rows_s_2,cols_s_2));
 
+	//Analyse (decomposition de l'image)
     for(int row=0; row<rows_s_2; row++)
     {
-        const int row_x2 = row << 1;
+        const int row_x2 = row << 1; // <<1 decalage de bit, multiplication par 2
         uchar* ptr11 = br[row_x2];
         uchar* ptr12 = ptr11+1;
         uchar* ptr21 = br[row_x2+1];
@@ -53,9 +54,7 @@ int main()
         }
     }
 
-
-
-
+	//Synthese (reconstitution de l'image)
     cv::Mat_<uchar> br2 = cv::Mat_<uchar>(rows,cols);
     for(int row=0; row<rows_s_2; row++)
     {
@@ -75,7 +74,7 @@ int main()
             const int val12 = *ptr_img1++;
             const int val21 = *ptr_img2++;
             const int val22 = *ptr_img3++;
-            *ptr11 = (val11 + val12 + val21 + val22)>>2;
+            *ptr11 = (val11 + val12 + val21 + val22)>>2; // division par 4
             *ptr12 = (val11 + val21 - (val12 + val22))>>2;
             *ptr21 = (val11 + val12 - (val21 + val22))>>2;
             *ptr22 = (val11 + val22 - (val21 + val12))>>2;
