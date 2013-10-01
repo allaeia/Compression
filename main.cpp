@@ -10,7 +10,7 @@
 
 int main()
 {
-    cv::Mat input = cv::imread("lena.bmp",CV_LOAD_IMAGE_COLOR);
+    cv::Mat input = cv::imread("lena.bmp",CV_LOAD_IMAGE_COLOR);//chargement image
     cv::Mat_<uchar> br;
     std::vector<cv::Mat_<int>> img;
     cv::cvtColor(input,br,CV_BGR2GRAY);
@@ -84,12 +84,12 @@ int main()
             ptr22+=2;
         }
     }
-    cv::namedWindow("input", CV_WINDOW_NORMAL );
+    cv::namedWindow("input", CV_WINDOW_NORMAL );//renomage des fenetres
     cv::namedWindow("dst1", CV_WINDOW_NORMAL );
     cv::namedWindow("dst2", CV_WINDOW_NORMAL );
     cv::namedWindow("dst3", CV_WINDOW_NORMAL );
     cv::namedWindow("dst4", CV_WINDOW_NORMAL );
-    cv::imshow("input",br);
+    cv::imshow("input",br);//affichage des images de sortie
     cv::imshow("dst1",img[0]/4);
     cv::imshow("dst2",img[1]);
     cv::imshow("dst3",img[2]);
