@@ -147,10 +147,11 @@ int main()
     cv::imshow("dst2",img[1]);
     cv::imshow("dst3",img[2]);
     cv::imshow("dst4",img[3]);
-    cv::imwrite("img/img11.bmp",img[0]);
-    cv::imwrite("img/img12.bmp",img[1]);
-    cv::imwrite("img/img21.bmp",img[2]);
-    cv::imwrite("img/img22.bmp",img[3]);
+    cv::imwrite("img/img11.bmp",img[0]/255);
+    cv::imwrite("img/img12.bmp",img[1]/255);
+    cv::imwrite("img/img21.bmp",img[2]/255);
+    cv::imwrite("img/img22.bmp",img[3]/255);
+    cv::imwrite("img/image_reconstruite.bmp",br2);
     cv::namedWindow("br2", CV_WINDOW_NORMAL );
     cv::imshow("br2",br2);
     cv::namedWindow("diff", CV_WINDOW_NORMAL );
