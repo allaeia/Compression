@@ -7,7 +7,50 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include<vector>
+template<typename T>
+void normalized_gray_image(cv::Mat_<T>& mat, const double new_max)
+{
+ //   using T = float;
+    T max_val(*mat[0]);
+    T min_val = max_val;
+    const int n_row = mat.rows;
+    const int n_col = mat.cols;
 
+    for(int row=0; row<n_row; row++)
+    {
+        T* ptr = mat[row];
+        for(int col=0; col<n_col; col++)
+        {
+            if(*ptr>max_val)
+            {
+                max_val = *ptr;
+            }
+            if(*ptr<min_val)
+            {
+                min_val = *ptr;
+            }
+            ptr++;
+        }
+    }
+    if(max_val==min_val)
+    {
+        mat = cv::Mat::zeros(n_row, n_col, mat.type());
+    }
+    else
+    {
+        long double ratio = new_max*1.0/(max_val-min_val);
+        for(int row=0; row<n_row; row++)
+        {
+            T* ptr = mat[row];
+            for(int col=0; col<n_col; col++)
+            {
+                *ptr = ratio*(*ptr-min_val);
+                //std::cout << *ptr << std::endl;
+                ptr++;
+            }
+        }
+    }
+}
 int main()
 {
     cv::Mat input = cv::imread("img/lena.bmp",CV_LOAD_IMAGE_COLOR);
@@ -96,12 +139,24 @@ int main()
     cv::namedWindow("dst3", CV_WINDOW_NORMAL );
     cv::namedWindow("dst4", CV_WINDOW_NORMAL );
     cv::imshow("input",br);
-    cv::imshow("dst1",img[0]/4);
+    for(int i=0; i<4; i++)
+    {
+        normalized_gray_image(img[i],65535);//because If the image is 16-bit unsigned or 32-bit integer, the pixels are divided by 256
+    }
+    cv::imshow("dst1",img[0]);
     cv::imshow("dst2",img[1]);
     cv::imshow("dst3",img[2]);
     cv::imshow("dst4",img[3]);
+    cv::imwrite("img/img11.bmp",img[0]);
+    cv::imwrite("img/img12.bmp",img[1]);
+    cv::imwrite("img/img21.bmp",img[2]);
+    cv::imwrite("img/img22.bmp",img[3]);
     cv::namedWindow("br2", CV_WINDOW_NORMAL );
     cv::imshow("br2",br2);
+    cv::namedWindow("diff", CV_WINDOW_NORMAL );
+    cv::Mat_<uchar> diff = br2-br;
+    normalized_gray_image(diff,255);
+    cv::imshow("diff",diff);
     cv::waitKey();
 
     return 0;
