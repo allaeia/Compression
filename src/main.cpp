@@ -6,7 +6,11 @@
 #include <opencv2/core/core_c.h>
 #include <opencv2/highgui/highgui.hpp>
 
+
 #include<vector>
+
+#include"haar.h"
+#include"td2.h"
 template<typename T>
 void normalized_gray_image(cv::Mat_<T>& mat, const double new_max)
 {
@@ -145,9 +149,8 @@ void ondelette_2(const cv::Mat_<T>& br, std::vector<cv::Mat_<U>>& img)
         }
     }
 }
-
 template<typename T>
-void sur_ech_v(const cv::Mat_<T>& src, cv::Mat_<T>& dst)
+void sur_ech_v(const cv::Mat_<T>& src, cv::Mat_<T>& dst, bool hf)
 {
     const int rows = src.rows;
     const int cols = src.cols;
@@ -155,12 +158,25 @@ void sur_ech_v(const cv::Mat_<T>& src, cv::Mat_<T>& dst)
     const int size = cols * sizeof(T);
     dst = cv::Mat_<T>(rowsx2,cols);
     T* ptr_dst = dst[0];
-    for(int row=0; row<rows; row++)
+    if(!hf)
     {
-        memcpy(ptr_dst, src[row], size);
-        ptr_dst+=cols;
-        memset(ptr_dst,0,size);
-        ptr_dst+=cols;
+        for(int row=0; row<rows; row++)
+        {
+            memcpy(ptr_dst, src[row], size);
+            ptr_dst+=cols;
+            memset(ptr_dst,0,size);
+            ptr_dst+=cols;
+        }
+    }
+    else
+    {
+        for(int row=0; row<rows; row++)
+        {
+            memset(ptr_dst,0,size);
+            ptr_dst+=cols;
+            memcpy(ptr_dst, src[row], size);
+            ptr_dst+=cols;
+        }
     }
 }
 //peut etre decaller le sur echantillonage d'un pour les hf
@@ -192,105 +208,26 @@ void ondelette_2_synthese(const std::vector<cv::Mat_<U>>& img, cv::Mat_<T>& br2)
     std::vector<cv::Mat_<U>> tmp(4);
     std::vector<cv::Mat_<U>> tmp2(4);
 
-    sur_ech_v(img[0],tmp2[0]);
+    sur_ech_v(img[0],tmp2[0],false);
     filtre_bf_v(tmp2[0],tmp[0]);
-    sur_ech_v(img[1],tmp2[1]);
+    sur_ech_v(img[1],tmp2[1],true);
     filtre_hf_v(tmp2[1],tmp[1]);
     tmp[0]+=tmp[1];
 
-    sur_ech_v(img[2],tmp2[2]);
+    sur_ech_v(img[2],tmp2[2],false);
     filtre_bf_v(tmp2[2],tmp[2]);
-    sur_ech_v(img[3],tmp2[3]);
+    sur_ech_v(img[3],tmp2[3],true);
     filtre_hf_v(tmp2[3],tmp[3]);
     tmp[2]+=tmp[3];
 
 
-    sur_ech_h(tmp[0],tmp2[0]);
+    sur_ech_h(tmp[0],tmp2[0],false);
     filtre_bf_h(tmp2[0],br2);
-    sur_ech_h(tmp[2],tmp2[1]);
+    sur_ech_h(tmp[2],tmp2[1],true);
     filtre_hf_h(tmp2[1],tmp[0]);
     br2 += tmp[0];
 }
 
-template<typename T>
-void ondelette_1(const cv::Mat_<T>& br, std::vector<cv::Mat_<int>>& img)
-{
-    const int cols = br.cols;
-    const int rows = br.rows;
-    const int cols_s_2 = cols>>1;
-    const int rows_s_2 = rows>>1;
-
-    img.clear();
-    img.push_back(cv::Mat_<int>(rows_s_2,cols_s_2));
-    img.push_back(cv::Mat_<int>(rows_s_2,cols_s_2));
-    img.push_back(cv::Mat_<int>(rows_s_2,cols_s_2));
-    img.push_back(cv::Mat_<int>(rows_s_2,cols_s_2));
-
-    for(int row=0; row<rows_s_2; row++)
-    {
-        const int row_x2 = row << 1;
-        const T* ptr11 = br[row_x2];
-        const T* ptr12 = ptr11+1;
-        const T* ptr21 = br[row_x2+1];
-        const T* ptr22 = ptr21+1;
-
-        int* ptr_img0 = img[0][row];
-        int* ptr_img1 = img[1][row];
-        int* ptr_img2 = img[2][row];
-        int* ptr_img3 = img[3][row];
-        for(int col=0; col<cols_s_2; col++)
-        {
-            const int val11 = *ptr11;
-            const int val12 = *ptr12;
-            const int val21 = *ptr21;
-            const int val22 = *ptr22;
-            ptr11+=2;
-            ptr12+=2;
-            ptr21+=2;
-            ptr22+=2;
-            *ptr_img0++ = val11 + val12 + val21 + val22;
-            *ptr_img1++ = val11 - val12 + val21 - val22;
-            *ptr_img2++ = val11 + val12 - val21 - val22;
-            *ptr_img3++ = val11 - val12 - val21 + val22;
-        }
-    }
-}
-template<typename T>
-void ondelette_1_synthese(const std::vector<cv::Mat_<int>>& img, cv::Mat_<T>& br2)
-{
-    const int cols = br2.cols;
-    const int rows = br2.rows;
-    const int cols_s_2 = cols>>1;
-    const int rows_s_2 = rows>>1;
-    for(int row=0; row<rows_s_2; row++)
-    {
-        const int row_x2 = row << 1;
-        T* ptr11 = br2[row_x2];
-        T* ptr12 = ptr11+1;
-        T* ptr21 = br2[row_x2+1];
-        T* ptr22 = ptr21+1;
-
-        const int* ptr_img0 = img[0][row];
-        const int* ptr_img1 = img[1][row];
-        const int* ptr_img2 = img[2][row];
-        const int* ptr_img3 = img[3][row];
-        for(int col=0; col<cols_s_2; col++)
-        {
-            const int val11 = *ptr_img0++;
-            const int val12 = *ptr_img1++;
-            const int val21 = *ptr_img2++;
-            const int val22 = *ptr_img3++;
-            *ptr11 = (val11 + val12 + val21 + val22)>>2;
-            *ptr12 = (val11 + val21 - (val12 + val22))>>2;
-            *ptr21 = (val11 + val12 - (val21 + val22))>>2;
-            *ptr22 = (val11 + val22 - (val21 + val12))>>2;
-            ptr11+=2;
-            ptr12+=2;
-            ptr21+=2;
-            ptr22+=2;
-        }
-    }
-}
 template<typename S,typename T>
 void coller_image(cv::Mat_<S>& dst, const cv::Mat_<T>& src1,const cv::Mat_<T>& src2,const cv::Mat_<T>& src3,const cv::Mat_<T>& src4)
 {
@@ -349,6 +286,13 @@ int main()
 
     ondelette_2(br,img2);
 
+    cv::Mat_<int> quantif;
+    std::vector<int> table_assoc;
+
+    quantificateur_scalaire_uniforme(img[0][1],quantif,table_assoc, 8);
+
+
+
 
     cv::Mat_<uchar> br2 = cv::Mat_<uchar>(rows,cols);
 
@@ -357,6 +301,21 @@ int main()
         ondelette_1_synthese(img[i],img[i-1][0]);
     }
     ondelette_1_synthese(img[0],br2);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     cv::namedWindow("input", CV_WINDOW_NORMAL );
     cv::namedWindow("dst1", CV_WINDOW_NORMAL );
     cv::namedWindow("dst2", CV_WINDOW_NORMAL );
