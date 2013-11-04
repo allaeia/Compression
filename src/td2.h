@@ -72,4 +72,22 @@ void quantificateur_scalaire_uniforme(const cv::Mat_<T>& src, cv::Mat_<U>& dst, 
     ofs.close();
 }
 
+
+
+
+template<typename T, typename U>
+void reconstruction_quantificateur_scalaire_uniforme(const cv::Mat_<U>& src, cv::Mat_<T>& dst, std::vector<T>& table_association)
+{
+    const int rows = src.rows;
+    const int cols = src.cols;
+    const int rowscols = rows*cols;
+    dst = cv::Mat_<T>(rows,cols);
+    const U* ptr_src = src[0];
+    T* ptr_dst = dst[0];
+    for(register int row_col=0; row_col<rowscols; row_col++)
+    {
+        *ptr_dst++ = table_association[*ptr_src++];
+    }
+}
+
 #endif // TD2_H
