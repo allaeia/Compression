@@ -278,7 +278,7 @@ int main()
     cv::cvtColor(input,br,CV_BGR2GRAY);
 
     ondelette_1(br,img[0]);
-    for(int i=1; i<img.size(); i++)
+    for(unsigned int i=1; i<img.size(); i++)
     {
         ondelette_1(img[i-1][0],img[i]);
     }
@@ -286,10 +286,20 @@ int main()
 
     ondelette_2(br,img2);
 
-    cv::Mat_<int> quantif;
-    std::vector<int> table_assoc;
+    std::vector<std::vector<cv::Mat_<int>>> quantif(img.size());
+    std::vector<std::vector<std::vector<int>>> table_assoc(img.size());
+    for(unsigned int i=0; i<img.size(); i++)
+    {
+        quantif[i].resize(img[i].size());
+        table_assoc[i].resize(img[i].size());
+        for(unsigned int j=0; j<img[i].size(); j++)
+        {
+            quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], 8);
+        }
+    }
 
-    quantificateur_scalaire_uniforme(img[0][1],quantif,table_assoc, 8);
+
+    //quantificateur_scalaire_uniforme(img[0][1],quantif,table_assoc, 8);
 
 
 
@@ -347,14 +357,14 @@ int main()
 
 
 
-    for(int i=0; i<img.size(); i++)
+    for(unsigned int i=0; i<img.size(); i++)
     {
         for(int j=0; j<4; j++)
         {
             normalized_gray_image(img[i][j],255);
         }
     }
-    for(int i=0; i<img.size(); i++)
+    for(unsigned int i=0; i<img.size(); i++)
     {
         for(int j=i; j>0; j--)
         {
