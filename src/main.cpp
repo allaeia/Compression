@@ -309,13 +309,6 @@ int main()
 
 
 
-
-
-
-
-
-
-
     cv::namedWindow("input", CV_WINDOW_NORMAL );
     cv::namedWindow("dst1", CV_WINDOW_NORMAL );
     cv::namedWindow("dst2", CV_WINDOW_NORMAL );
