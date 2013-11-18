@@ -286,6 +286,11 @@ int main()
 
     ondelette_2(br,img2);
 
+
+    distorsion_f_de_L(img[0][1],2,512);
+
+
+
     std::vector<std::vector<cv::Mat_<int>>> quantif(img.size());
     std::vector<std::vector<std::vector<int>>> table_assoc(img.size());
     for(unsigned int i=0; i<img.size(); i++)
@@ -297,7 +302,6 @@ int main()
             quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], 8);
         }
     }
-
 
     //quantificateur_scalaire_uniforme(img[0][1],quantif,table_assoc, 8);
 
@@ -311,6 +315,13 @@ int main()
         ondelette_1_synthese(img[i],img[i-1][0]);
     }
     ondelette_1_synthese(img[0],br2);
+
+
+
+
+
+
+
 
 
 
@@ -385,4 +396,5 @@ int main()
 
     return 0;
 }
+
 

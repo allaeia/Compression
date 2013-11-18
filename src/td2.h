@@ -35,7 +35,8 @@ void quantificateur_scalaire_uniforme(const cv::Mat_<T>& src, cv::Mat_<U>& dst, 
     min = -max;
     //(max-min)/L = longueur d'un intervalle
     // (i+0.5)*(max-min)/L + min = representant pour les membre du ieme intervalle
-    dst = cv::Mat_<U>(rows,cols);
+    if(dst.rows!=rows||dst.cols!=cols)
+        dst = cv::Mat_<U>(rows,cols);
     U* ptr_dst = dst[0];
     std::cout << max << std::endl;
     max = L/2 * ceil((max-min)*1.0/L);
@@ -53,25 +54,81 @@ void quantificateur_scalaire_uniforme(const cv::Mat_<T>& src, cv::Mat_<U>& dst, 
             //*ptr_dst++=static_cast<T>((floor((*ptr_src++ -min)*ratio)+0.5)*interval_length+min);
         }
     }
-    table_association.clear();
+    //table_association.clear();
     table_association.resize(L);
     T* ptr_tab = table_association.data();
     *ptr_tab = indice_min*interval_length;
+    std::cout << "aert"<<std::endl;
     for(int i=1; i<L+1; i++)//peut etre L ou L+1 ou L+2
     {
         *(ptr_tab+1)=*ptr_tab+interval_length;
         ptr_tab++;
     }
 
+   // std::cout << "aerteeeee123"<<std::endl;
+//*
+    std::ofstream ofs;
+    ofs.open("caracteristique_io_quantif.csv");
 
-    std::ofstream ofs("caracteristique_io_quantif.csv");
+    //std::cout << "aerteeeee123456"<<std::endl;
+    //std::cout << min << " " << max<<std::endl;
     for(T t = min; t<=max; ++t)
     {
+      //  std::cout <<floor((t)*ratio+0.5)-indice_min<<std::endl;
+        //std::cout <<table_association[floor((t)*ratio+0.5)-indice_min]<<std::endl;
         ofs << t << "," << table_association[floor((t)*ratio+0.5)-indice_min] << std::endl;
     }
     ofs.close();
+
+    //std::cout << "aerteeeeddddde"<<std::endl;
+    //*/
 }
 
+template<typename T, typename U>
+double get_distorsion(const cv::Mat_<T>& I1, const cv::Mat_<U>& indice, const std::vector<T>& table_association)
+{
+    double distorsion(0);
+    const int rows = I1.rows;
+    const int cols = I1.cols;
+    const int rowscols = rows*cols;
+    const U* ptr_indice = indice[0];
+    const T* ptr_I1 = I1[0];
+    for(register int row_col=0; row_col<rowscols; row_col++)
+    {
+       // std::cout << "a "<<*ptr_indice<<std::endl;
+        distorsion += pow(*ptr_I1++ - table_association[*ptr_indice++],2);
+    }
+    distorsion/=rowscols;
+    return distorsion;
+}
+template<typename T>
+void distorsion_f_de_L(const cv::Mat_<T>& src, int min, int max)
+{
+    assert(min<max);
+    assert(min%2==0);
+    cv::Mat_<T> dst = cv::Mat_<T>(src.rows,src.cols);
+    std::vector<T> table_association;
+    std::vector<double> R;
+    std::vector<double> D;
+    for(int L=min; L<=max; L+=2)
+    {
+        //std::cout << "ert "<<L<<std::endl;
+        quantificateur_scalaire_uniforme(src,dst,table_association,L);
+        R.push_back(log2(double(L)));
+        //std::cout << "erdt"<<std::endl;
+        D.push_back(get_distorsion(src,dst,table_association));
+    }
+    std::ofstream ofs("D=f(R).csv");
+    double* ptr_R = R.data();
+    double* ptr_D = D.data();
+    const int size = R.size();
+    for(int i=0; i<size; i++)
+    {
+        ofs << *ptr_R++ << ";" << *ptr_D++ << std::endl;
+    }
+    ofs.close();
+    //std::cout << "success"<<std::endl;
+}
 
 
 
