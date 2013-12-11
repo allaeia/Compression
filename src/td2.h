@@ -11,9 +11,16 @@
 
 
 #include<vector>
+
+//L have to be odd. if not we add 1.
 template<typename T, typename U>
 void quantificateur_scalaire_uniforme(const cv::Mat_<T>& src, cv::Mat_<U>& dst, std::vector<T>& table_association, int L)//L:niveau de quantification
 {
+    if(L<=0)
+    {
+        std::cerr << "vous devez avoir au moins une classe" << std::endl;
+        assert(L>0);
+    }
     //assert T signed
     T min(*src[0]);
     T max(min);
@@ -31,38 +38,64 @@ void quantificateur_scalaire_uniforme(const cv::Mat_<T>& src, cv::Mat_<U>& dst, 
                 max=val;
         }
     }
+    /*
     max = std::max((max>=0?max:-max),(min>=0?min:-min));
     min = -max;
+
     //(max-min)/L = longueur d'un intervalle
     // (i+0.5)*(max-min)/L + min = representant pour les membre du ieme intervalle
-    if(dst.rows!=rows||dst.cols!=cols)
-        dst = cv::Mat_<U>(rows,cols);
-    U* ptr_dst = dst[0];
     //std::cout << max << std::endl;
     max = L/2 * ceil((max-min)*1.0/L);
     //std::cout << max << std::endl;
+    if(max==0)
+        max++;//to avoid division by 0
     min = - max;
-    const long long interval_length = (max-min)*1.0/L;
-    const long double ratio = L*1.0/(max-min);
+
+//*/
+
+    max = std::max((max>=0?max:-max),(min>=0?min:-min));// + 1;
+    min = -max;
+    if(!(L%2))
+        L++;
+//std::cout << L << std::endl;
+    if(dst.rows!=rows||dst.cols!=cols)
+        dst = cv::Mat_<U>(rows,cols);
+    U* ptr_dst = dst[0];
+
+    const long double interval_length = double(max-min)/L;
+    const long double ratio = double(L)/(max-min);
     int indice_min = floor(min*ratio+0.5);
     for(int row=0; row<rows; row++)
     {
         const T* ptr_src = src[row];
         for(int col=0; col<cols; col++)
         {
-            *ptr_dst++ = floor((*ptr_src++)*ratio+0.5)-indice_min;
+            //*ptr_dst++ = floor((*ptr_src++)*ratio+0.5)-indice_min;
+            *ptr_dst++ = floor((*ptr_src++-min)*ratio);
+           // std::cout << *(ptr_dst-1) << " " << L << std::endl;
+            if(*(ptr_dst-1)>=L)
+            {
+                *(ptr_dst-1)=*(ptr_dst-1)-1;
+                std::cout << L << " " << *(ptr_dst-1)<<" " << *(ptr_src-1)<<" " << min<<" " << max<<" " << (*(ptr_src-1)-min)*ratio<<std::endl;
+                assert(*(ptr_dst-1)<L);
+            }
             //*ptr_dst++=static_cast<T>((floor((*ptr_src++ -min)*ratio)+0.5)*interval_length+min);
         }
     }
     //table_association.clear();
     table_association.resize(L);
     T* ptr_tab = table_association.data();
-    *ptr_tab = indice_min*interval_length;
+    //*ptr_tab = indice_min*interval_length;
+    *ptr_tab = -floor(L/2)*interval_length;
+
     //std::cout << "aert"<<std::endl;
-    for(int i=1; i<L+1; i++)//peut etre L ou L+1 ou L+2
+    //for(int i=1; i<L+1; i++)//peut etre L ou L+1 ou L+2
+    for(int i=1; i<L; i++)//peut etre L ou L+1 ou L+2
     {
-        *(ptr_tab+1)=*ptr_tab+interval_length;
+        //*(ptr_tab+1)=*ptr_tab+interval_length;
+          *(ptr_tab+1)=floor(i-L/2)*interval_length;
         ptr_tab++;
+        //std::cout << *ptr_tab <<std::endl;
     }
 
    // std::cout << "aerteeeee123"<<std::endl;
@@ -187,12 +220,12 @@ template<typename T>
 void distorsion_f_de_L(const cv::Mat_<T>& src, int min, int max)
 {
     assert(min<max);
-    assert(min%2==0);
+    assert(min>0);
     cv::Mat_<T> dst = cv::Mat_<T>(src.rows,src.cols);
     std::vector<T> table_association;
     std::vector<double> R;
     std::vector<double> D;
-    for(int L=min; L<=max; L+=2)
+    for(int L=min; L<=max; L++)
     {
         //std::cout << "ert "<<L<<std::endl;
         quantificateur_scalaire_uniforme(src,dst,table_association,L);
@@ -204,6 +237,7 @@ void distorsion_f_de_L(const cv::Mat_<T>& src, int min, int max)
     double* ptr_R = R.data();
     double* ptr_D = D.data();
     const int size = R.size();
+    ofs << "R"<< ";" << "D" << std::endl;
     for(int i=0; i<size; i++)
     {
         ofs << *ptr_R++ << ";" << *ptr_D++ << std::endl;
@@ -220,13 +254,44 @@ void reconstruction_quantificateur_scalaire_uniforme(const cv::Mat_<U>& src, cv:
     const int rows = src.rows;
     const int cols = src.cols;
     const int rowscols = rows*cols;
-    dst = cv::Mat_<T>(rows,cols);
+    std::cout << rows << " " << cols << std::endl;
+    if(dst.rows != rows || dst.cols != cols)
+        dst = cv::Mat_<T>(rows,cols);
+    std::cout<<"azert"<<std::endl;
     const U* ptr_src = src[0];
     T* ptr_dst = dst[0];
     for(register int row_col=0; row_col<rowscols; row_col++)
     {
         *ptr_dst++ = table_association[*ptr_src++];
     }
+}
+
+
+template<typename T, typename U>
+double get_eqm(const cv::Mat_<U>& src_0, const cv::Mat_<T>& src_1)
+{
+    const int rows = src_0.rows;
+    const int cols = src_0.cols;
+    const int rowscols = rows*cols;
+    double eqm = 0;
+
+    const U* ptr_0 = src_0[0];
+    const T* ptr_1 = src_1[0];
+    for(register int row_col=0; row_col<rowscols; row_col++)
+    {
+        eqm+=pow(*ptr_0++-*ptr_1++,2);
+    }
+    eqm/=rowscols;
+    return eqm;
+}
+template<typename T, typename U>
+inline double get_psnr(const cv::Mat_<U>& src_0, const cv::Mat_<T>& src_1)
+{
+    return 10*log10(65025/get_eqm(src_0, src_1));
+}
+inline double get_psnr(double eqm)
+{
+    return 10*log10(65025/eqm);
 }
 
 #endif // TD2_H

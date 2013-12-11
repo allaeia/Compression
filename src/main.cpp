@@ -270,8 +270,11 @@ int main()
     const int rows = input.rows;
     const int cols_s_2 = cols>>1;
     const int rows_s_2 = rows>>1;
+    const int rowscols = rows*cols;
 
     cv::Mat_<uchar> br;
+    cv::Mat_<uchar> img_ensemble(rows,cols);
+    cv::Mat_<uchar> img_ensemble_new(rows,cols);
     std::vector<std::vector<cv::Mat_<int>>> img(2);
     //std::vector<cv::Mat_<int>> img2(img.size());
 
@@ -294,46 +297,104 @@ int main()
 
     std::vector<std::vector<cv::Mat_<int>>> quantif(img.size());
     std::vector<std::vector<std::vector<int>>> table_assoc(img.size());
-    for(unsigned int i=0; i<img.size(); i++)
-    {
-        quantif[i].resize(img[i].size());
-        table_assoc[i].resize(img[i].size());
-        for(unsigned int j=0; j<img[i].size(); j++)
-        {
-            quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], 8);//8
-        }
-    }
     std::vector<std::vector<double>> entropy(img.size());
-    double entropy_total(0);
-    for(unsigned int i=0; i<img.size(); i++)
-    {
-        entropy[i].resize(img[i].size());
-        for(unsigned int j=0; j<img[i].size(); j++)
-        {
-            entropy[i][j] = get_entropy(quantif[i][j],table_assoc[i][j]);
-            entropy_total+=entropy[i][j];
-        }
-    }
-    std::cout << entropy_total << std::endl;
     std::vector<std::vector<cv::Mat_<int>>> img_new(img.size());
-    for(unsigned int i=0; i<img.size(); i++)
-    {
-        img_new[i].resize(img[i].size());
-        for(unsigned int j=0; j<img[i].size(); j++)
-        {
-            reconstruction_quantificateur_scalaire_uniforme(quantif[i][j],img_new[i][j],table_assoc[i][j]);
-        }
-    }
-
-    img_new[img.size()-1][0] = img[img.size()-1][0];
+    double entropy_total;
     cv::Mat_<uchar> reconstruction = cv::Mat_<uchar>(rows,cols);
-    for(int i=img.size()-1; i>0; i--)
+    std::vector<double> ventropy_total;
+    std::vector<double> psnr;
+    ventropy_total.reserve(10);
+    psnr.reserve(10);
+
+    std::ostringstream oss;
+    for(int nb_classe = 2; nb_classe < (1<<10); nb_classe<<=1)
     {
-        ondelette_1_synthese(img_new[i],img_new[i-1][0]);
+        for(unsigned int i=0; i<img.size(); i++)
+        {
+            quantif[i].resize(img[i].size());
+            table_assoc[i].resize(img[i].size());
+            for(unsigned int j=0; j<img[i].size(); j++)
+            {
+                quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], nb_classe);//8
+                //quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], 51);//8
+            }
+        }
+        entropy_total = 0;
+        for(unsigned int i=0; i<img.size(); i++)
+        {
+            entropy[i].resize(img[i].size());
+            for(unsigned int j=0; j<img[i].size(); j++)
+            {
+                entropy[i][j] = get_entropy(quantif[i][j],table_assoc[i][j]);
+                entropy_total+=entropy[i][j]*(quantif[i][j].rows*quantif[i][j].cols);
+            }
+        }
+        entropy_total/=rowscols;
+        std::cout << "entropy total: "<< entropy_total << std::endl;
+        for(unsigned int i=0; i<img.size(); i++)
+        {
+            img_new[i].resize(img[i].size());
+            for(unsigned int j=0; j<img[i].size(); j++)
+            {
+                reconstruction_quantificateur_scalaire_uniforme(quantif[i][j],img_new[i][j],table_assoc[i][j]);
+            }
+        }
+
+        img_new[img.size()-1][0] = img[img.size()-1][0].clone();
+        for(int i=img.size()-1; i>0; i--)
+        {
+            ondelette_1_synthese(img_new[i],img_new[i-1][0]);
+        }
+        ondelette_1_synthese(img_new[0],reconstruction);
+        ventropy_total.push_back(entropy_total);
+        psnr.push_back(get_psnr(reconstruction,br));
+
+
+        oss.str("");
+        oss << "img/reconstruction" << nb_classe << ".bmp";
+        cv::imwrite(oss.str().c_str(),reconstruction);
+        cv::namedWindow("reconstruction", CV_WINDOW_NORMAL );
+        cv::imshow("reconstruction",reconstruction);
+
+        cv::waitKey();
+//*
+        for(unsigned int i=0; i<img.size(); i++)
+        {
+            for(int j=0; j<4; j++)
+            {
+                normalized_gray_image(img_new[i][j],255);
+            }
+        }
+        for(unsigned int i=0; i<img.size(); i++)
+        {
+            for(int j=i; j>0; j--)
+            {
+                coller_image(img_new[j-1][0],img_new[j][0],img_new[j][1],img_new[j][2],img_new[j][3]);
+            }
+            coller_image(img_ensemble_new,img_new[0][0],img_new[0][1],img_new[0][2],img_new[0][3]);
+        }//*/
+        oss.str("");
+        oss << "img/ensemble" << nb_classe << ".bmp";
+        cv::imwrite(oss.str().c_str(),img_ensemble_new);
+
+
+
+        std::cout << "eqm total: "<< get_eqm(reconstruction,br) << std::endl;
+        std::cout << "psnr: " << get_psnr(reconstruction,br)<<std::endl;
+        std::cout << "taux compression: " << 1-entropy_total/get_entropy(br)<<std::endl;
+        std::cout<<std::endl;
+
     }
-    ondelette_1_synthese(img_new[0],reconstruction);
-
-
+    std::ofstream ofs("L_entropy_psnr.csv");
+    ofs << "L;entropy_total;PSNRdB"<<std::endl;
+    double* ptr_entropy = ventropy_total.data();
+    double* ptr_psnr = psnr.data();
+    for(int nb_classe = 2; nb_classe < (1<<10); nb_classe<<=1)
+    {
+        ofs << nb_classe << ";" << *ptr_entropy++ << ";" << *ptr_psnr++ << std::endl;
+    }
+    ofs.close();
+    //*/
     cv::namedWindow("reconstruction", CV_WINDOW_NORMAL );
     cv::imshow("reconstruction",reconstruction);
 
@@ -398,8 +459,6 @@ int main()
     cv::namedWindow("br2", CV_WINDOW_NORMAL );
     cv::imshow("br2",br2);
 //*/
-    cv::Mat_<uchar> img_ensemble(rows,cols);
-    cv::Mat_<uchar> img_ensemble_new(rows,cols);
 
 
 
