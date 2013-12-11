@@ -272,8 +272,8 @@ int main()
     const int rows_s_2 = rows>>1;
 
     cv::Mat_<uchar> br;
-    std::vector<std::vector<cv::Mat_<int>>> img(6);
-    std::vector<cv::Mat_<int>> img2(6);
+    std::vector<std::vector<cv::Mat_<int>>> img(2);
+    //std::vector<cv::Mat_<int>> img2(img.size());
 
     cv::cvtColor(input,br,CV_BGR2GRAY);
 
@@ -282,9 +282,10 @@ int main()
     {
         ondelette_1(img[i-1][0],img[i]);
     }
+    std::cout << get_entropy(img[img.size()-1][0])<<std::endl;
+    std::cout << get_entropy(br)<<std::endl;
 
-
-    ondelette_2(br,img2);
+    //ondelette_2(br,img2);
 
 
     distorsion_f_de_L(img[0][1],2,512);
@@ -299,10 +300,44 @@ int main()
         table_assoc[i].resize(img[i].size());
         for(unsigned int j=0; j<img[i].size(); j++)
         {
-            quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], 8);
+            quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], 8);//8
+        }
+    }
+    std::vector<std::vector<double>> entropy(img.size());
+    double entropy_total(0);
+    for(unsigned int i=0; i<img.size(); i++)
+    {
+        entropy[i].resize(img[i].size());
+        for(unsigned int j=0; j<img[i].size(); j++)
+        {
+            entropy[i][j] = get_entropy(quantif[i][j],table_assoc[i][j]);
+            entropy_total+=entropy[i][j];
+        }
+    }
+    std::cout << entropy_total << std::endl;
+    std::vector<std::vector<cv::Mat_<int>>> img_new(img.size());
+    for(unsigned int i=0; i<img.size(); i++)
+    {
+        img_new[i].resize(img[i].size());
+        for(unsigned int j=0; j<img[i].size(); j++)
+        {
+            reconstruction_quantificateur_scalaire_uniforme(quantif[i][j],img_new[i][j],table_assoc[i][j]);
         }
     }
 
+    img_new[img.size()-1][0] = img[img.size()-1][0];
+    cv::Mat_<uchar> reconstruction = cv::Mat_<uchar>(rows,cols);
+    for(int i=img.size()-1; i>0; i--)
+    {
+        ondelette_1_synthese(img_new[i],img_new[i-1][0]);
+    }
+    ondelette_1_synthese(img_new[0],reconstruction);
+
+
+    cv::namedWindow("reconstruction", CV_WINDOW_NORMAL );
+    cv::imshow("reconstruction",reconstruction);
+
+    cv::waitKey();
     //quantificateur_scalaire_uniforme(img[0][1],quantif,table_assoc, 8);
 
 
@@ -325,33 +360,32 @@ int main()
 
 
 
-
-
-
-
-
     cv::namedWindow("input", CV_WINDOW_NORMAL );
+    cv::imshow("input",br);
+    /*
     cv::namedWindow("dst1", CV_WINDOW_NORMAL );
     cv::namedWindow("dst2", CV_WINDOW_NORMAL );
     cv::namedWindow("dst3", CV_WINDOW_NORMAL );
     cv::namedWindow("dst4", CV_WINDOW_NORMAL );
-    cv::imshow("input",br);
     for(int i=0; i<4; i++)
     {
         normalized_gray_image(img[0][i],65535);//because If the image is 16-bit unsigned or 32-bit integer, the pixels are divided by 256
     }
+
     cv::imshow("dst1",img[0][0]);
     cv::imshow("dst2",img[0][1]);
     cv::imshow("dst3",img[0][2]);
     cv::imshow("dst4",img[0][3]);
+    /*
     for(int i=0; i<4; i++)
     {
         normalized_gray_image(img2[i],65535);//because If the image is 16-bit unsigned or 32-bit integer, the pixels are divided by 256
     }
+    cv::waitKey();
     cv::imshow("dst1",img2[0]);
     cv::imshow("dst2",img2[1]);
     cv::imshow("dst3",img2[2]);
-    cv::imshow("dst4",img2[3]);
+    cv::imshow("dst4",img2[3]);//*//*
     img[0][0]/=255;
     img[0][1]/=255;
     img[0][2]/=255;
@@ -363,8 +397,9 @@ int main()
     cv::imwrite("img/image_reconstruite.bmp",br2);
     cv::namedWindow("br2", CV_WINDOW_NORMAL );
     cv::imshow("br2",br2);
-
+//*/
     cv::Mat_<uchar> img_ensemble(rows,cols);
+    cv::Mat_<uchar> img_ensemble_new(rows,cols);
 
 
 
@@ -377,24 +412,37 @@ int main()
     }
     for(unsigned int i=0; i<img.size(); i++)
     {
+        for(int j=0; j<4; j++)
+        {
+            normalized_gray_image(img_new[i][j],255);
+        }
+    }
+    for(unsigned int i=0; i<img.size(); i++)
+    {
         for(int j=i; j>0; j--)
         {
             coller_image(img[j-1][0],img[j][0],img[j][1],img[j][2],img[j][3]);
+            coller_image(img_new[j-1][0],img_new[j][0],img_new[j][1],img_new[j][2],img_new[j][3]);
         }
         coller_image(img_ensemble,img[0][0],img[0][1],img[0][2],img[0][3]);
+        coller_image(img_ensemble_new,img_new[0][0],img_new[0][1],img_new[0][2],img_new[0][3]);
         std::ostringstream oss;
         oss << "img/rec" << (i+1) << ".bmp";
         cv::imwrite(oss.str().c_str(),img_ensemble);
+        oss << "_new.bmp";
+        cv::imwrite(oss.str().c_str(),img_ensemble_new);
     }
     cv::namedWindow("img_ensemble", CV_WINDOW_NORMAL );
     cv::imshow("img_ensemble",img_ensemble);
-    cv::namedWindow("diff", CV_WINDOW_NORMAL );
+    cv::namedWindow("img_ensemble_new", CV_WINDOW_NORMAL );
+    cv::imshow("img_ensemble_new",img_ensemble_new);
+  /*  cv::namedWindow("diff", CV_WINDOW_NORMAL );
     cv::Mat_<uchar> diff = br2-br;
     normalized_gray_image(diff,255);
-    cv::imshow("diff",diff);
-    cv::waitKey();
+  cv::imshow("diff",diff);//*/
+    while(uchar(cv::waitKey(20))!='q');
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 

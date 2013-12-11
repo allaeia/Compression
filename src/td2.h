@@ -38,9 +38,9 @@ void quantificateur_scalaire_uniforme(const cv::Mat_<T>& src, cv::Mat_<U>& dst, 
     if(dst.rows!=rows||dst.cols!=cols)
         dst = cv::Mat_<U>(rows,cols);
     U* ptr_dst = dst[0];
-    std::cout << max << std::endl;
+    //std::cout << max << std::endl;
     max = L/2 * ceil((max-min)*1.0/L);
-    std::cout << max << std::endl;
+    //std::cout << max << std::endl;
     min = - max;
     const long long interval_length = (max-min)*1.0/L;
     const long double ratio = L*1.0/(max-min);
@@ -58,7 +58,7 @@ void quantificateur_scalaire_uniforme(const cv::Mat_<T>& src, cv::Mat_<U>& dst, 
     table_association.resize(L);
     T* ptr_tab = table_association.data();
     *ptr_tab = indice_min*interval_length;
-    std::cout << "aert"<<std::endl;
+    //std::cout << "aert"<<std::endl;
     for(int i=1; i<L+1; i++)//peut etre L ou L+1 ou L+2
     {
         *(ptr_tab+1)=*ptr_tab+interval_length;
@@ -100,6 +100,88 @@ double get_distorsion(const cv::Mat_<T>& I1, const cv::Mat_<U>& indice, const st
     }
     distorsion/=rowscols;
     return distorsion;
+}
+template<typename T, typename U>
+double get_entropy(const cv::Mat_<U>& indice, const std::vector<T>& table_association)
+{
+    const int rows = indice.rows;
+    const int cols = indice.cols;
+    const int rowscols = rows*cols;
+    const double un_sur_rowscols = 1.0/rowscols;
+
+    const int size_table_assoc = table_association.size();
+    std::vector<int> nb_elem(size_table_assoc,0);
+    const U* ptr_indice = indice[0];
+    for(register int i=0; i<rowscols; i++)
+    {
+      //  std::cout << *ptr_indice++ << std::endl;
+        nb_elem[*ptr_indice++]++;
+    }
+   // std::cout << "aaaaa"<<std::endl;
+    double pi;
+    double entropy(0);
+    int* ptr_nb_elem = nb_elem.data();
+    for(register int i=0; i<size_table_assoc; i++)
+    {
+        pi = (*ptr_nb_elem++) * un_sur_rowscols;
+        if(pi!=0)
+            entropy -= pi * log2(pi);
+    }
+   // std::cout << "aaaaa"<<std::endl;
+    return entropy;
+}
+template<typename T>
+double get_entropy(const cv::Mat_<T>& img)
+{
+    const int rows = img.rows;
+    const int cols = img.cols;
+    const int rowscols = rows*cols;
+    const double un_sur_rowscols = 1.0/rowscols;
+
+    T min(*img[0]);
+    T max(min);
+    for(int row=0; row<rows; row++)
+    {
+        const T* ptr_src = img[row];
+        for(int col=0; col<cols; col++)
+        {
+            T val = *ptr_src++;
+            if(val<min)
+                min=val;
+            else if(val>max)
+                max=val;
+        }
+    }
+    const unsigned int nb_elem_size = (min<0?max-min:max);
+    std::vector<int> nb_elem(nb_elem_size,0);
+    const T* ptr_indice = img[0];
+
+    if(min<0)
+    {
+        for(register int i=0; i<rowscols; i++)
+        {
+            nb_elem[*ptr_indice++ - min]++;
+        }
+    }
+    else
+    {
+        for(register int i=0; i<rowscols; i++)
+        {
+            nb_elem[*ptr_indice++]++;
+        }
+    }
+   // std::cout << "aaaaa"<<std::endl;
+    double pi;
+    double entropy(0);
+    int* ptr_nb_elem = nb_elem.data();
+    for(register int i=0; i<nb_elem_size; i++)
+    {
+        pi = (*ptr_nb_elem++) * un_sur_rowscols;
+        if(pi!=0)
+            entropy -= pi * log2(pi);
+    }
+   // std::cout << "aaaaa"<<std::endl;
+    return entropy;
 }
 template<typename T>
 void distorsion_f_de_L(const cv::Mat_<T>& src, int min, int max)

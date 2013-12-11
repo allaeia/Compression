@@ -5,7 +5,9 @@ CONFIG -= qt
 
 CONFIG += c++11
 
-SOURCES += src/main.cpp
+SOURCES += src/main.cpp \
+    src/td2.cpp \
+    src/haar.cpp
 
 #for ubuntu et mac
 INCLUDEPATH += /usr/local/include/opencv
@@ -24,3 +26,7 @@ LIBS += -lopencv_core \
 -lopencv_legacy \
 -lopencv_flann \
 -lopencv_nonfree
+
+HEADERS += \
+    src/td2.h \
+    src/haar.h
