@@ -3,12 +3,19 @@ CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
 
-CONFIG += c++11
+//CONFIG += c++11
+QMAKE_CXXFLAGS += -std=c++11
 
 SOURCES += src/main.cpp \
     src/td2.cpp \
     src/haar.cpp
 
+linux { # For Linux
+  QMAKE_CXXFLAGS += -fopenmp
+  QMAKE_LFLAGS += -fopenmp
+  QMAKE_CXXFLAGS += -march=native
+  QMAKE_CXXFLAGS_RELEASE *= -O3
+}
 #for ubuntu et mac
 INCLUDEPATH += /usr/local/include/opencv
 INCLUDEPATH += /usr/local/include
