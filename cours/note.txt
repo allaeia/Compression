@@ -1,0 +1,45 @@
+Chaine de compr
+---------------
+
+mise en forme (adapt qtf)
+->
+qtfct + indexation (perte info)
+->
+codage entropique (- redondance)
+->
+adaptation o canal (+ redondance)
+..
+..
+..
+->
+decod canal
+->
+decod entropieque
+->
+desindexation
+->
+transfo inv
+.
+.
+Hoffman
+-------
+
+Entropie:
+Somme(pi*log2(pi))
+
+longueur moyenne:
+l\=Somme(pi*l(pi))
+
+si uniqmt decodable, vérifie:
+H<=l\<=H+1
+
+taux comp:
+tc=deb init/deb apres compr
+
+Arithmetique
+------------
+
+nouveau morceau =
+(borde gauche parent - borne droite parent)
+*chiffre qu'on cherche (position initiale)
++schift de la bande parent
