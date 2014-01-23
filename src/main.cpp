@@ -272,13 +272,16 @@ int main()
     const int rows_s_2 = rows>>1;
     const int rowscols = rows*cols;
 
-    cv::Mat_<uchar> br;
-    cv::Mat_<uchar> img_ensemble(rows,cols);
-    cv::Mat_<uchar> img_ensemble_new(rows,cols);
-    std::vector<std::vector<cv::Mat_<int>>> img(2);
+    cv::Mat input_2;
+    cv::Mat_<float> br;
+    cv::Mat_<float> img_ensemble(rows,cols);
+    cv::Mat_<float> img_ensemble_new(rows,cols);
+    std::vector<std::vector<cv::Mat_<float>>> img(4);
     //std::vector<cv::Mat_<int>> img2(img.size());
+    cv::cvtColor(input,input_2,CV_BGR2GRAY);
+	input_2.convertTo(br, CV_32FC1);
+	br/=256;
 
-    cv::cvtColor(input,br,CV_BGR2GRAY);
 
     ondelette_1(br,img[0]);
     for(unsigned int i=1; i<img.size(); i++)
@@ -296,26 +299,42 @@ int main()
 
 
     std::vector<std::vector<cv::Mat_<int>>> quantif(img.size());
-    std::vector<std::vector<std::vector<int>>> table_assoc(img.size());
+    std::vector<std::vector<std::vector<float>>> table_assoc(img.size());
     std::vector<std::vector<double>> entropy(img.size());
-    std::vector<std::vector<cv::Mat_<int>>> img_new(img.size());
+    std::vector<std::vector<cv::Mat_<float>>> img_new(img.size());
     double entropy_total;
-    cv::Mat_<uchar> reconstruction = cv::Mat_<uchar>(rows,cols);
+    cv::Mat_<float> reconstruction = cv::Mat_<float>(rows,cols);
     std::vector<double> ventropy_total;
     std::vector<double> psnr;
     ventropy_total.reserve(10);
     psnr.reserve(10);
 
-    std::ostringstream oss;
-    for(int nb_classe = 2; nb_classe < (1<<10); nb_classe<<=1)
-    {
+	std::vector<std::vector<double>> v_R(img.size());
+	double R_total(0);
         for(unsigned int i=0; i<img.size(); i++)
+        {
+			v_R[i].resize(img[i].size());
+            for(unsigned int j=0; j<img[i].size(); j++)
+            {
+				double R = allocation_optimale(i+1, -0.05f, img[i][j]);
+				std::cout << "alloc end" << std::endl;
+				R_total+=R;
+				v_R[i][j]=R;
+			}
+		}
+		std::cout << R_total << std::endl;
+    std::ostringstream oss;
+	auto fff = [&](size_t nb_classe,bool bbb=true)
+	{for(unsigned int i=0; i<img.size(); i++)
         {
             quantif[i].resize(img[i].size());
             table_assoc[i].resize(img[i].size());
             for(unsigned int j=0; j<img[i].size(); j++)
             {
-                quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], nb_classe);//8
+				if(bbb)
+               		quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], nb_classe);//8
+				else
+					quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], pow(2,v_R[i][j]));
                 //quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], 51);//8
             }
         }
@@ -362,7 +381,7 @@ int main()
         {
             for(int j=0; j<4; j++)
             {
-                normalized_gray_image(img_new[i][j],255);
+                normalized_gray_image(img_new[i][j],1.0f);
             }
         }
         for(unsigned int i=0; i<img.size(); i++)
@@ -383,8 +402,13 @@ int main()
         std::cout << "psnr: " << get_psnr(reconstruction,br)<<std::endl;
         std::cout << "taux compression: " << 1-entropy_total/get_entropy(br)<<std::endl;
         std::cout<<std::endl;
-
-    }
+	};
+    
+    for(int nb_classe = 2; nb_classe < (1<<10); nb_classe<<=1)
+    {
+		fff(nb_classe);
+   }
+	fff(0,false);
     std::ofstream ofs("L_entropy_psnr.csv");
     ofs << "L;entropy_total;PSNRdB"<<std::endl;
     double* ptr_entropy = ventropy_total.data();
@@ -466,14 +490,14 @@ int main()
     {
         for(int j=0; j<4; j++)
         {
-            normalized_gray_image(img[i][j],255);
+            normalized_gray_image(img[i][j],1.0f);
         }
     }
     for(unsigned int i=0; i<img.size(); i++)
     {
         for(int j=0; j<4; j++)
         {
-            normalized_gray_image(img_new[i][j],255);
+            normalized_gray_image(img_new[i][j],1.0f);
         }
     }
     for(unsigned int i=0; i<img.size(); i++)
