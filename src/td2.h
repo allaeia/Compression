@@ -258,10 +258,10 @@ void reconstruction_quantificateur_scalaire_uniforme(const cv::Mat_<U>& src, cv:
     const int rows = src.rows;
     const int cols = src.cols;
     const int rowscols = rows*cols;
-    std::cout << rows << " " << cols << std::endl;
+  //  std::cout << rows << " " << cols << std::endl;
     if(dst.rows != rows || dst.cols != cols)
         dst = cv::Mat_<T>(rows,cols);
-    std::cout<<"azert"<<std::endl;
+//    std::cout<<"azert"<<std::endl;
     const U* ptr_src = src[0];
     T* ptr_dst = dst[0];
     for(register int row_col=0; row_col<rowscols; row_col++)
