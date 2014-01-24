@@ -316,7 +316,7 @@ int main()
 			v_R[i].resize(img[i].size());
             for(unsigned int j=0; j<img[i].size(); j++)
             {
-				double R = allocation_optimale(i+1, -0.05f, img[i][j]);
+				double R = allocation_optimale(i+1, -0.5f, img[i][j]);
 				std::cout << "alloc end" << std::endl;
 				R_total+=R;
 				v_R[i][j]=R;
@@ -371,7 +371,7 @@ int main()
 
         oss.str("");
         oss << "img/reconstruction" << nb_classe << ".bmp";
-        cv::imwrite(oss.str().c_str(),reconstruction);
+        cv::imwrite(oss.str().c_str(),255*reconstruction);
         cv::namedWindow("reconstruction", CV_WINDOW_NORMAL );
         cv::imshow("reconstruction",reconstruction);
 
@@ -394,7 +394,7 @@ int main()
         }//*/
         oss.str("");
         oss << "img/ensemble" << nb_classe << ".bmp";
-        cv::imwrite(oss.str().c_str(),img_ensemble_new);
+        cv::imwrite(oss.str().c_str(),255*img_ensemble_new);
 
 
 
@@ -407,7 +407,7 @@ int main()
     for(int nb_classe = 2; nb_classe < (1<<10); nb_classe<<=1)
     {
 		fff(nb_classe);
-   }
+    }
 	fff(0,false);
     std::ofstream ofs("L_entropy_psnr.csv");
     ofs << "L;entropy_total;PSNRdB"<<std::endl;
@@ -511,9 +511,9 @@ int main()
         coller_image(img_ensemble_new,img_new[0][0],img_new[0][1],img_new[0][2],img_new[0][3]);
         std::ostringstream oss;
         oss << "img/rec" << (i+1) << ".bmp";
-        cv::imwrite(oss.str().c_str(),img_ensemble);
+        cv::imwrite(oss.str().c_str(),255*img_ensemble);
         oss << "_new.bmp";
-        cv::imwrite(oss.str().c_str(),img_ensemble_new);
+        cv::imwrite(oss.str().c_str(),255*img_ensemble_new);
     }
     cv::namedWindow("img_ensemble", CV_WINDOW_NORMAL );
     cv::imshow("img_ensemble",img_ensemble);
