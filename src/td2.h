@@ -297,22 +297,19 @@ inline double get_psnr(double eqm)
 {
     return 10*log10(65025/eqm);
 }
+
 template<typename T>
 double allocation_optimale(size_t profondeur, double lambda, const cv::Mat_<T>& src)
-{//ai = 1/2^(2*i)
-	//return L
+{
 	const double ai = 1.0/(1<<(2*profondeur));
 	const double lambda_ai = lambda*ai;
     cv::Mat_<T> dst = cv::Mat_<T>(src.rows,src.cols);
     std::vector<T> table_association;
-    std::vector<double> R;
-    std::vector<double> D;
+    std::vector<double> R;    std::vector<double> D;
     for(int L=1; L<=512; L+=2)
     {
-        //std::cout << "ert "<<L<<std::endl;
         quantificateur_scalaire_uniforme(src,dst,table_association,L);
         R.push_back(log2(double(L)));
-        //std::cout << "erdt"<<std::endl;
         D.push_back(get_distorsion(src,dst,table_association));
     }
     double* ptr_R = R.data();
@@ -327,16 +324,11 @@ double allocation_optimale(size_t profondeur, double lambda, const cv::Mat_<T>& 
 		const double& d = *ptr_D;
 		*++ptr_deriv =  (d-*++ptr_D)/(r-*++ptr_R);
 	}
-//	ptr_deriv = derive.data();
-//	for(int i=0; i<size-1; ++i)
-//	{
-//		std::cout << *ptr_deriv++ << " ";
-//	}
 	ptr_deriv = derive.data();
 	double tmp_1 = *ptr_deriv++;
 	double tmp_2 = *ptr_deriv++;
 	double tmp_val;
-	for(int i=1; i<size-2; i++)//voir si pb
+	for(int i=1; i<size-2; i++)
 	{
 		tmp_val = (tmp_1+2*tmp_2+*ptr_deriv)/4;
 		tmp_1=tmp_2;
@@ -344,17 +336,10 @@ double allocation_optimale(size_t profondeur, double lambda, const cv::Mat_<T>& 
 		*(ptr_deriv-1)=tmp_val;
 		ptr_deriv++;
 	}
-//	std::cout << std::endl;
-//	ptr_deriv = derive.data();
-//	for(int i=0; i<size-1; ++i)
-//	{
-//		std::cout << *ptr_deriv++ << " ";
-//	}
 	ptr_deriv = derive.data();
 	ptr_deriv++;
 	int i=1;
 	for(; *ptr_deriv<lambda_ai && i<size; ++ptr_deriv,++i);
-	std::cout << std::endl<<lambda_ai << " " << ai << " " << R[i] << " " << ai*R[i]<<" " << i <<std::endl;
 	return R[i];
 }
 
