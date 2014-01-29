@@ -65,7 +65,7 @@ void codeur(const Iter& b, const Iter& end, IterDst dst)
 		stack.pop();
 		tmp2 = stack.top();
 		stack.pop();
-		std::cout << tmp1->proba << " " << tmp2->proba << std::endl;
+//		std::cout << tmp1->proba << " " << tmp2->proba << std::endl;
 		tmp1->next = std::shared_ptr<elem<T>>(new elem<T>(tmp1->proba + tmp2->proba));
 		tmp2->next = tmp1->next;
 		tmp1->sym=0;
