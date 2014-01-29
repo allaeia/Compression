@@ -307,6 +307,7 @@ int main()
     double entropy_total;
     cv::Mat_<float> reconstruction = cv::Mat_<float>(rows,cols);
     std::vector<double> ventropy_total;
+    std::vector<double> vdebit_total;
     std::vector<double> psnr;
     ventropy_total.reserve(10);
     psnr.reserve(10);
@@ -355,15 +356,19 @@ int main()
         }
         entropy_total/=rowscols;
         std::cout << "entropy total: "<< entropy_total << std::endl;
+		double debit_total(0);
         for(unsigned int i=0; i<img.size(); i++)
         {
             for(unsigned int j=0; j<img[i].size(); j++)
             {
 				std::vector<std::string> vs(quantif[i][j].rows*quantif[i][j].cols);
 				codeur<double>(quantif[i][j].begin(),quantif[i][j].end(),vs.begin());
-				std::cout << debit(vs.begin(), vs.end())<<std::endl;
+				std::cout << "debit_bande: "<<debit(vs.begin(), vs.end())<<std::endl;
+				debit_total+=debit(vs.begin(), vs.end())*(vs.size()*1.0/(rowscols));
             }
         }
+		std::cout << "debit_total_huffman: "<<debit_total << std::endl;
+        std::cout << "entropy total: "<< entropy_total << std::endl;
         for(unsigned int i=0; i<img.size(); i++)
         {
             img_new[i].resize(img[i].size());
@@ -379,6 +384,7 @@ int main()
         }
         ondelette_1_synthese(img_new[0],reconstruction);
         ventropy_total.push_back(entropy_total);
+		vdebit_total.push_back(debit_total);
         psnr.push_back(get_psnr(reconstruction,br));
 
 
@@ -422,13 +428,14 @@ int main()
 		fff(nb_classe);
     }
 	fff(0,false);
-    std::ofstream ofs("L_entropy_psnr.csv");
-    ofs << "L;entropy_total;PSNRdB"<<std::endl;
+    std::ofstream ofs("L_entropy_debitHuffman__psnr.csv");
+    ofs << "L;entropy_total;debit_huffman;PSNRdB"<<std::endl;
     double* ptr_entropy = ventropy_total.data();
     double* ptr_psnr = psnr.data();
+	double* ptr_debit = vdebit_total.data();
     for(int nb_classe = 2; nb_classe < (1<<10); nb_classe<<=1)
     {
-        ofs << nb_classe << ";" << *ptr_entropy++ << ";" << *ptr_psnr++ << std::endl;
+        ofs << nb_classe << ";" << *ptr_entropy++ << ";" << *ptr_debit++ <<';'<<*ptr_psnr++ << std::endl;
     }
     ofs.close();
     //*/
