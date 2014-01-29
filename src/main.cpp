@@ -419,7 +419,8 @@ int main()
 
         std::cout << "eqm total: "<< get_eqm(reconstruction,br) << std::endl;
         std::cout << "psnr: " << get_psnr(reconstruction,br)<<std::endl;
-        std::cout << "taux compression: " << 1-entropy_total/get_entropy(br)<<std::endl;
+//        std::cout << "taux compression: " << 1-entropy_total/get_entropy(br)<<std::endl;
+        std::cout << "taux compression: " << get_entropy(br)/entropy_total<<std::endl;
         std::cout<<std::endl;
 	};
     
