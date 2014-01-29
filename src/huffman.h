@@ -7,6 +7,9 @@
 #include<queue>
 #include<memory>
 #include<iostream>
+#include<sstream>
+#include<string>
+
 
 template<typename T>
 class elem
@@ -32,8 +35,8 @@ class comp
 }
 };
 //we use T to compute the proba : T has to be a floating value
-template<typename T, typename Iter>
-void codeur(const Iter& b, const Iter& end)
+template<typename T, typename Iter, typename IterDst>
+void codeur(const Iter& b, const Iter& end, IterDst dst)
 {
 	Iter iter(b);
 	typedef typename std::remove_reference<decltype(*b)>::type Type;
@@ -81,21 +84,49 @@ void codeur(const Iter& b, const Iter& end)
 			tmp1=tmp1->next;
 		}
 	}
+	std::map<Type,std::string> code;
+	std::ostringstream oss;
 	for(auto& a : pile_symbole)
 	{
+		oss.str("");
 		std::cout << a.first << " :";
 		while(a.second.size())
 		{
+			oss <<  (a.second.top()+0);
 			std::cout << " " << (a.second.top()+0);
 			a.second.pop();
 		}
-		std::cout << std::endl;
+		code[a.first]=oss.str();
+		std::cout << ' '<<code[a.first] << std::endl;
+	}
+	for(Iter iter(b);iter!=end;++iter,++dst)
+	{
+		*dst = code[*iter];
 	}
 }
-int test()
+template<typename Iter>
+double debit(Iter begin, const Iter& end)
+{
+	size_t size(0);
+	size_t nbr(0);
+	while(begin!=end)
+	{
+		nbr++;
+		size+=begin->size();
+		++begin;
+	}
+	return double(size)/nbr;
+}
+void test()
 {
 	std::vector<int> test = {7,2,3,7,2,2,3,0,3};
-	codeur<double>(test.begin(), test.end());
+	std::vector<std::string> test_dst(test.size());
+	codeur<double>(test.begin(), test.end(),test_dst.begin());
+	for(int i=0; i<test.size(); ++i)
+	{
+		std::cout << test[i] << ' ' << test_dst[i] << std::endl;
+	}
+	std::cout << debit(test_dst.begin(),test_dst.end())<<std::endl;
 }
 
 #endif

@@ -11,6 +11,7 @@
 
 #include"haar.h"
 #include"td2.h"
+#include"huffman.h"
 template<typename T>
 void normalized_gray_image(cv::Mat_<T>& mat, const double new_max)
 {
@@ -259,6 +260,7 @@ void coller_image(cv::Mat_<S>& dst, const cv::Mat_<T>& src1,const cv::Mat_<T>& s
 
 int main()
 {
+	test();
     cv::Mat input = cv::imread("img/lena.bmp",CV_LOAD_IMAGE_COLOR);
     if(input.rows==0 && input.cols==0)
     {
@@ -317,7 +319,7 @@ int main()
             for(unsigned int j=0; j<img[i].size(); j++)
             {
 				double R = allocation_optimale(i+1, -0.5f, img[i][j]);
-				std::cout << "alloc end" << std::endl;
+//				std::cout << "alloc end" << std::endl;
 				R_total+=R;
 				v_R[i][j]=R;
 			}
@@ -334,7 +336,10 @@ int main()
 				if(bbb)
                		quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], nb_classe);//8
 				else
+				{
 					quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], pow(2,v_R[i][j]));
+					std::cout << pow(2,v_R[i][j])<<std::endl;
+				}
                 //quantificateur_scalaire_uniforme(img[i][j],quantif[i][j],table_assoc[i][j], 51);//8
             }
         }
@@ -352,13 +357,21 @@ int main()
         std::cout << "entropy total: "<< entropy_total << std::endl;
         for(unsigned int i=0; i<img.size(); i++)
         {
+            for(unsigned int j=0; j<img[i].size(); j++)
+            {
+				std::vector<std::string> vs(quantif[i][j].rows*quantif[i][j].cols);
+				codeur<double>(quantif[i][j].begin(),quantif[i][j].end(),vs.begin());
+				std::cout << debit(vs.begin(), vs.end())<<std::endl;
+            }
+        }
+        for(unsigned int i=0; i<img.size(); i++)
+        {
             img_new[i].resize(img[i].size());
             for(unsigned int j=0; j<img[i].size(); j++)
             {
                 reconstruction_quantificateur_scalaire_uniforme(quantif[i][j],img_new[i][j],table_assoc[i][j]);
             }
         }
-
         img_new[img.size()-1][0] = img[img.size()-1][0].clone();
         for(int i=img.size()-1; i>0; i--)
         {
