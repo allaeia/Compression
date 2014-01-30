@@ -19,12 +19,12 @@ Les librairies nécessaires à ce projet sont :<br>
 
 Compilation :
 -------------
-Pour compiler notre projet, il suffit de faire tourner la commande `qmake ..;make` dans le dossier `./build`
+Pour compiler notre projet, il suffit de faire tourner la commande `qmake ..;make` dans le dossier `./code/build`
 <br>
 <b>Attention</b>: il faut donc avoir les modules `qmake` correspondants aux librairies précisées ci-dessus!
 
 Execution :
 -----------
 
-* il suffit de lancer la commande `./compression`
+* il suffit de lancer la commande `./compression` dans le dossier `./code/build`
 
