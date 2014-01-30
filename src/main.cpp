@@ -10,7 +10,7 @@
 #include<vector>
 
 #include"haar.h"
-#include"td2.h"
+#include"quantif.h"
 #include"huffman.h"
 template<typename T>
 void normalized_gray_image(cv::Mat_<T>& mat, const double new_max)
